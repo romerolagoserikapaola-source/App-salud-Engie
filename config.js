@@ -1,5 +1,5 @@
 window.APP_CONFIG = {
-  API_URL: "PEGA_AQUI_TU_URL_NUEVA_DE_APPS_SCRIPT_TERMINADA_EN_EXEC",
+  API_URL: "https://script.google.com/macros/s/AKfycbz0WahSh5tlFpU6Dz5aeZvVb98gA1METaxIrzytaaYxlWZIA5ug9pHy1dTtY3kxnUN4Pg/exec",
   APP_NAME: "Control Preventivo de Salud ENGIE",
   ADMIN_PIN: "2026ENGIE"
 };
