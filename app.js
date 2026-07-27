@@ -1,4 +1,11 @@
-const $=id=>document.getElementById(id),API=APP_CONFIG.API_URL;let trabajadorActual=null,reporteEval=null;
+const $ = id => document.getElementById(id);
+
+const API = window.APP_CONFIG
+  ? window.APP_CONFIG.API_URL
+  : "https://script.google.com/macros/s/AKfycbz0WahSh5tlFpU6Dz5aeZvVb98gA1METaxIrzytaaYxlWZIA5ug9pHy1dTtY3kxnUN4Pg/exec";
+
+let trabajadorActual = null;
+let reporteEval = null;
 async function api(action,p={}){const r=await fetch(API,{method:'POST',body:JSON.stringify({action,...p})});const d=await r.json();if(!d.ok)throw Error(d.error||'Error');return d}
 function vista(v){document.querySelectorAll('.view').forEach(x=>x.classList.add('hidden'));$(v).classList.remove('hidden');const u=new URL(location.href);u.searchParams.set('view',v);history.replaceState({},'',u)}document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>vista(b.dataset.view));vista(new URLSearchParams(location.search).get('view')||'trabajador');
 $('buscar').onclick=async()=>{try{const d=await api('buscarTrabajador',{dni:$('dni').value});trabajadorActual=d.trabajador;$('datos').innerHTML=`<b>${trabajadorActual.Nombres}</b><br>${trabajadorActual.Cargo} · ${trabajadorActual.Empresa}`;$('datos').classList.remove('hidden');$('form').classList.remove('hidden')}catch(e){alert(e.message)}};
