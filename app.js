@@ -214,10 +214,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function drawBar(id, data, key, suffix) {
     const canvas = $(id);
     const ratio = window.devicePixelRatio || 1;
-    const dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const textColor = dark ? '#f8fafc' : '#102047';
-    const mutedColor = dark ? '#cbd5e1' : '#69758f';
-    const barColor = dark ? '#38bdf8' : '#29468d';
+    const bodyColor = getComputedStyle(document.body).color;
+    const textColor = bodyColor || '#102047';
+    const mutedColor = textColor;
+    const barColor = '#00B8F0';
 
     if (id === 'chartSintomas') {
       const rowH = 42;
@@ -242,11 +242,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const value = Number(item[key]) || 0;
         const y = 24 + i * rowH;
         const bw = Math.max(2, (W - labelW - 70) * value / max);
-        ctx.fillStyle = textColor;
         ctx.font = '12px Arial';
         ctx.textAlign = 'left';
         let label = String(item.label || '');
         if (label.length > 30) label = label.slice(0,29) + '…';
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(4, y - 1, labelW - 10, 24);
+        ctx.fillStyle = '#081A3A';
         ctx.fillText(label, 10, y + 11);
         ctx.fillStyle = barColor;
         ctx.fillRect(labelW, y, bw, 22);
@@ -281,9 +283,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const left = 40 + i * (bw + gap);
       ctx.fillStyle = barColor;
       ctx.fillRect(left, H - 52 - height, bw, height);
-      ctx.fillStyle = textColor;
+      const valueText = value + suffix;
       ctx.font = 'bold 12px Arial';
-      ctx.fillText(value + suffix, left + bw/2, H - 60 - height);
+      const valueWidth = ctx.measureText(valueText).width + 10;
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(left + bw/2 - valueWidth/2, H - 73 - height, valueWidth, 18);
+      ctx.fillStyle = '#081A3A';
+      ctx.fillText(valueText, left + bw/2, H - 60 - height);
       ctx.font = '10px Arial';
       const words = String(item.label || '').split(' ');
       let lines = [], line = '';
@@ -294,7 +300,14 @@ document.addEventListener('DOMContentLoaded', () => {
         } else line = test;
       });
       if (line) lines.push(line);
-      lines.slice(0,2).forEach((txt, idx) => ctx.fillText(txt, left + bw/2, H - 30 + idx*12));
+      lines.slice(0,2).forEach((txt, idx) => {
+        const y = H - 30 + idx*12;
+        const tw = ctx.measureText(txt).width + 6;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(left + bw/2 - tw/2, y - 9, tw, 11);
+        ctx.fillStyle = '#081A3A';
+        ctx.fillText(txt, left + bw/2, y);
+      });
     });
   }
 
@@ -375,12 +388,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   $('btnFiltrarSeg').addEventListener('click', loadSeguimiento);
-
-  $('btnConsultaMenu').addEventListener('click', () => {
-    $('consultaMenu').classList.toggle('hidden');
-  });
-
-  $('btnConsulta').addEventListener('click', async () => {
+$('btnConsulta').addEventListener('click', async () => {
     try {
       const dni = $('consultaDni').value.trim();
       if (!/^\d{8}$/.test(dni)) throw new Error('Ingrese un DNI válido de 8 dígitos.');

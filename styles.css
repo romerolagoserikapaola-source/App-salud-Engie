@@ -70,3 +70,20 @@ canvas{width:100%;height:300px}.result{margin-top:18px;padding:20px;border-radiu
   .consulta-summary .meta{grid-template-columns:1fr}
   .consulta-summary .meta div{border-right:0}
 }
+
+/* V2.3: legibilidad y campos de sustancias */
+.subsection{
+  margin-top:20px;
+  padding:18px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:rgba(0,184,240,.06);
+}
+.step-title.compact{margin-bottom:12px}
+@media (prefers-color-scheme: dark){
+  canvas{background:#20242b;border-radius:10px}
+  .subsection{background:#172033}
+}
+@media(max-width:600px){
+  .subsection{padding:14px}
+}
