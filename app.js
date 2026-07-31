@@ -124,6 +124,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
       setMessage('msgTrab', data.mensaje || 'Registro guardado correctamente.', 'ok');
+
+      const tieneSintomas = seleccionados.some(s => s !== 'No tengo ningún síntoma');
+      const reportoAlcohol = alcohol === 'SI';
+      const reportoMarihuana = marihuana === 'SI';
+
+      if (tieneSintomas || reportoAlcohol || reportoMarihuana) {
+        alert(
+          'Registro generado correctamente.\n\n' +
+          'Se ha identificado una condición que requiere evaluación preventiva. ' +
+          'Informe inmediatamente a su supervisor y al personal de salud antes de iniciar o continuar sus labores.'
+        );
+      } else {
+        alert(
+          'Registro generado correctamente.\n\n' +
+          'No se reportaron síntomas. Si durante la jornada presenta algún malestar o síntoma, ' +
+          'informe inmediatamente a su supervisor y al personal de salud.'
+        );
+      }
+
       $('formTrab').reset();
       $('otroWrap').classList.add('hidden');
       $('medWrap').classList.add('hidden');
@@ -322,6 +341,35 @@ document.addEventListener('DOMContentLoaded', () => {
       rows.map(r => '<tr>' + cols.map(c => `<td>${escapeHtml(r[c] ?? '')}</td>`).join('') + '</tr>').join('') + '</tbody>';
   }
 
+  function normalizarFechaParaInput(valor) {
+    if (!valor) return '';
+
+    const texto = String(valor).trim();
+
+    // Formato ISO o similar: 2026-07-30
+    const iso = texto.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+
+    // Formato peruano: 30/07/2026 o 30/07/2026 23:34
+    const peru = texto.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (peru) {
+      const dia = peru[1].padStart(2, '0');
+      const mes = peru[2].padStart(2, '0');
+      return `${peru[3]}-${mes}-${dia}`;
+    }
+
+    // Último intento con Date, corrigiendo desfases de zona horaria
+    const fecha = new Date(valor);
+    if (!Number.isNaN(fecha.getTime())) {
+      const anio = fecha.getFullYear();
+      const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+      const dia = String(fecha.getDate()).padStart(2, '0');
+      return `${anio}-${mes}-${dia}`;
+    }
+
+    return '';
+  }
+
   $('btnBuscarEval').addEventListener('click', async () => {
     try {
       const dni = $('evalDni').value.trim();
@@ -331,11 +379,15 @@ document.addEventListener('DOMContentLoaded', () => {
       $('evalWorker').classList.remove('hidden');
       $('formEval').classList.remove('hidden');
       const now = new Date();
-      $('evalFecha').value = now.toISOString().slice(0,10);
+      const fechaReporte = normalizarFechaParaInput(evalWorker.Fecha);
+      $('evalFecha').value = fechaReporte || normalizarFechaParaInput(now);
       $('evalHora').value = now.toTimeString().slice(0,5);
       setMessage('evalMsg','');
     } catch (err) {
       setMessage('evalMsg', err.message, 'error');
+      alert('No hay reporte registrado para este DNI. El trabajador debe completar primero su registro preventivo de salud.');
+      $('evalWorker').classList.add('hidden');
+      $('formEval').classList.add('hidden');
     }
   });
 
