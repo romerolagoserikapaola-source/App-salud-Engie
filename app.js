@@ -102,6 +102,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (consumio === 'SI' && !$('medicamentos').value.trim()) throw new Error('Especifique el medicamento consumido.');
       const altura = document.querySelector('input[name="altura"]:checked')?.value;
       if (!altura) throw new Error('Indique si realizará trabajos a más de 7 metros.');
+      const alcohol = document.querySelector('input[name="alcohol"]:checked')?.value;
+      const marihuana = document.querySelector('input[name="marihuana"]:checked')?.value;
+      if (!alcohol) throw new Error('Indique si consumió alcohol en las últimas 12 horas.');
+      if (!marihuana) throw new Error('Indique si consumió marihuana en las últimas 24 horas.');
       if (!$('declaracion').checked) throw new Error('Debe aceptar la declaración de veracidad.');
 
       setMessage('msgTrab', 'Enviando registro...');
@@ -114,7 +118,8 @@ document.addEventListener('DOMContentLoaded', () => {
           ConsumioMedicamento: consumio,
           Medicamentos: $('medicamentos').value.trim(),
           TrabajosMayores7m: altura,
-          Observacion: $('observacion').value.trim(),
+          ConsumoAlcohol12h: alcohol,
+          ConsumoMarihuana24h: marihuana,
           Declaracion: 'SI'
         }
       });
@@ -209,34 +214,87 @@ document.addEventListener('DOMContentLoaded', () => {
   function drawBar(id, data, key, suffix) {
     const canvas = $(id);
     const ratio = window.devicePixelRatio || 1;
+    const dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const textColor = dark ? '#f8fafc' : '#102047';
+    const mutedColor = dark ? '#cbd5e1' : '#69758f';
+    const barColor = dark ? '#38bdf8' : '#29468d';
+
+    if (id === 'chartSintomas') {
+      const rowH = 42;
+      const cssHeight = Math.max(300, data.length * rowH + 50);
+      canvas.style.height = cssHeight + 'px';
+      canvas.width = canvas.clientWidth * ratio;
+      canvas.height = cssHeight * ratio;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(ratio, ratio);
+      const W = canvas.clientWidth;
+      ctx.clearRect(0, 0, W, cssHeight);
+      if (!data.length) {
+        ctx.fillStyle = mutedColor;
+        ctx.font = '14px Arial';
+        ctx.fillText('Sin datos', 20, 30);
+        return;
+      }
+      const max = Math.max(...data.map(x => Number(x[key]) || 0), 1);
+      const labelW = Math.min(220, Math.max(130, W * 0.36));
+      ctx.textBaseline = 'middle';
+      data.forEach((item, i) => {
+        const value = Number(item[key]) || 0;
+        const y = 24 + i * rowH;
+        const bw = Math.max(2, (W - labelW - 70) * value / max);
+        ctx.fillStyle = textColor;
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'left';
+        let label = String(item.label || '');
+        if (label.length > 30) label = label.slice(0,29) + '…';
+        ctx.fillText(label, 10, y + 11);
+        ctx.fillStyle = barColor;
+        ctx.fillRect(labelW, y, bw, 22);
+        ctx.fillStyle = textColor;
+        ctx.font = 'bold 12px Arial';
+        ctx.fillText(String(value), Math.min(labelW + bw + 8, W - 25), y + 11);
+      });
+      return;
+    }
+
+    const cssHeight = 300;
+    canvas.style.height = cssHeight + 'px';
     canvas.width = canvas.clientWidth * ratio;
-    canvas.height = 300 * ratio;
+    canvas.height = cssHeight * ratio;
     const ctx = canvas.getContext('2d');
     ctx.scale(ratio, ratio);
-    const W = canvas.clientWidth, H = 300;
+    const W = canvas.clientWidth, H = cssHeight;
     ctx.clearRect(0, 0, W, H);
     if (!data.length) {
-      ctx.fillStyle = '#69758f';
+      ctx.fillStyle = mutedColor;
       ctx.font = '14px Arial';
       ctx.fillText('Sin datos', 20, 30);
       return;
     }
     const max = Math.max(...data.map(x => Number(x[key]) || 0), 1);
-    const gap = 18;
-    const bw = Math.max(26, (W - 70) / data.length - gap);
+    const gap = Math.max(12, Math.min(24, W / (data.length * 4)));
+    const bw = Math.max(22, (W - 70) / data.length - gap);
     ctx.textAlign = 'center';
-    ctx.font = '12px Arial';
     data.forEach((item, i) => {
       const value = Number(item[key]) || 0;
-      const height = (H - 80) * value / max;
+      const height = (H - 95) * value / max;
       const left = 40 + i * (bw + gap);
-      ctx.fillStyle = '#29468d';
-      ctx.fillRect(left, H - 45 - height, bw, height);
-      ctx.fillStyle = '#102047';
+      ctx.fillStyle = barColor;
+      ctx.fillRect(left, H - 52 - height, bw, height);
+      ctx.fillStyle = textColor;
       ctx.font = 'bold 12px Arial';
-      ctx.fillText(value + suffix, left + bw/2, H - 52 - height);
-      ctx.font = '11px Arial';
-      ctx.fillText(String(item.label || '').slice(0,18), left + bw/2, H - 18);
+      ctx.fillText(value + suffix, left + bw/2, H - 60 - height);
+      ctx.font = '10px Arial';
+      const words = String(item.label || '').split(' ');
+      let lines = [], line = '';
+      words.forEach(word => {
+        const test = line ? line + ' ' + word : word;
+        if (ctx.measureText(test).width > bw + 18 && line) {
+          lines.push(line); line = word;
+        } else line = test;
+      });
+      if (line) lines.push(line);
+      lines.slice(0,2).forEach((txt, idx) => ctx.fillText(txt, left + bw/2, H - 30 + idx*12));
     });
   }
 
@@ -306,6 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
         empresa: $('sEmpresa').value,
         estadoEvaluacion: $('sEvaluacion').value,
         condicion: $('sCondicion').value,
+        dni: $('sDni').value.trim(),
         ...filterDates('s')
       });
       fillCompanies(data.empresas);
@@ -317,12 +376,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
   $('btnFiltrarSeg').addEventListener('click', loadSeguimiento);
 
+  $('btnConsultaMenu').addEventListener('click', () => {
+    $('consultaMenu').classList.toggle('hidden');
+  });
+
   $('btnConsulta').addEventListener('click', async () => {
     try {
-      const data = await api('consulta', {dni: $('consultaDni').value.trim()});
-      const c = data.resultado.CondicionFinal || 'PENDIENTE';
+      const dni = $('consultaDni').value.trim();
+      if (!/^\d{8}$/.test(dni)) throw new Error('Ingrese un DNI válido de 8 dígitos.');
+      const data = await api('consulta', {dni});
+      const r = data.resultado || {};
+      const c = r.CondicionFinal || 'PENDIENTE';
       const cls = c === 'APTO' ? 'apto' : c === 'NO APTO' ? 'no-apto' : 'observado';
-      $('consultaResultado').innerHTML = `<div class="result ${cls}">${escapeHtml(c)}</div><p style="text-align:center">${escapeHtml(data.resultado.Nombres || '')}</p>`;
+      const motivo = r.ObservacionMedica || (
+        c === 'NO APTO'
+          ? 'La condición fue determinada por el personal de salud según la evaluación realizada.'
+          : c === 'OBSERVADO'
+            ? 'El trabajador requiere seguimiento o una evaluación complementaria.'
+            : 'No se registraron restricciones en la última evaluación.'
+      );
+      $('consultaResultado').innerHTML = `
+        <div class="consulta-summary">
+          <div class="status ${cls}">${escapeHtml(c)}</div>
+          <div class="meta">
+            <div><b>Última condición registrada</b><br>${escapeHtml(c)}</div>
+            <div><b>Trabajador</b><br>${escapeHtml(r.Nombres || '')}</div>
+            <div><b>Fecha</b><br>${escapeHtml(r.Fecha || 'No registrada')}</div>
+            <div><b>Hora</b><br>${escapeHtml(r.Hora || 'No registrada')}</div>
+          </div>
+          <div class="reason"><b>Motivo / observación:</b><br>${escapeHtml(motivo)}</div>
+          <div class="note">Resultado de la última evaluación realizada por el personal de salud.</div>
+        </div>`;
     } catch (err) {
       $('consultaResultado').innerHTML = `<div class="message error">${escapeHtml(err.message)}</div>`;
     }

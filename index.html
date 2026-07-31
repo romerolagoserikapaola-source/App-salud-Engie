@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
   <meta name="theme-color" content="#1f326f">
-  <title>Control Preventivo de Salud ENGIE</title>
+  <title>Control Preventivo de Salud para trabajos críticos ENGIE</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -14,7 +14,7 @@
       <img src="engie-logo.png" alt="ENGIE">
     </div>
     <div class="brand-copy">
-      <strong>Control Preventivo de Salud</strong>
+      <strong>Control Preventivo de Salud para trabajos críticos</strong>
       <small>Registro diario y evaluación médica</small>
     </div>
   </div>
@@ -134,11 +134,7 @@
         <label><input type="radio" name="altura" value="SI" required>Sí</label>
         <label><input type="radio" name="altura" value="NO">No</label>
       </div>
-
-      <label for="observacion">Observación adicional</label>
-      <textarea id="observacion" rows="3" placeholder="Opcional"></textarea>
-
-      <label class="declaration">
+<label class="declaration">
         <input id="declaracion" type="checkbox" required>
         <span>Declaro que la información registrada es verdadera y corresponde a mi condición actual de salud.</span>
       </label>
@@ -222,6 +218,7 @@
         <select id="sFechaTipo"><option value="todos">Todas las fechas</option><option value="dia">Seleccionar día</option><option value="mes">Seleccionar mes</option></select>
         <input id="sFecha" type="date" class="hidden">
         <input id="sMes" type="month" class="hidden">
+        <input id="sDni" inputmode="numeric" maxlength="8" placeholder="Filtrar por DNI">
         <button id="btnFiltrarSeg" type="button">Aplicar filtros</button>
       </div>
       <section class="card"><div class="table-wrap"><table id="tblSeg"></table></div></section>
@@ -230,11 +227,25 @@
 </section>
 
 <section id="view-consulta" class="view hidden">
-  <section class="card login">
-    <h1>Consulta de salud</h1>
-    <p>Ingrese el DNI para consultar la última condición registrada.</p>
-    <div class="inline"><input id="consultaDni" maxlength="8" inputmode="numeric"><button id="btnConsulta" type="button">Consultar</button></div>
-    <div id="consultaResultado"></div>
+  <section class="card consulta-card">
+    <div class="consulta-header">
+      <div>
+        <h1>Consulta de salud</h1>
+        <p>Consulte la última evaluación realizada por el personal de salud.</p>
+      </div>
+      <button id="btnConsultaMenu" type="button" class="menu-button">Opciones ▾</button>
+    </div>
+    <div id="consultaMenu" class="consulta-menu hidden">
+      <button type="button" data-view="trabajador">Ir a Trabajador</button>
+      <button type="button" data-view="admin">Ir a Administrador</button>
+      <button type="button" data-view="consulta">Consulta de salud</button>
+    </div>
+    <div class="inline consulta-search">
+      <input id="consultaDni" maxlength="8" inputmode="numeric" placeholder="Ingrese DNI">
+      <button id="btnConsulta" type="button">Consultar</button>
+    </div>
+    <div id="consultaResultado" class="consulta-resultado"></div>
+    <footer class="consulta-footer">ENGIE - Control Preventivo de Salud - SSOMA</footer>
   </section>
 </section>
 </main>
