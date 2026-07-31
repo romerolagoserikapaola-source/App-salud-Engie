@@ -260,31 +260,31 @@ document.addEventListener('DOMContentLoaded', () => {
       data.forEach((item, i) => {
         const value = Number(item[key]) || 0;
         const y = 24 + i * rowH;
-        const bw = Math.max(2, (W - labelW - 70) * value / max);
+        // Ancho mínimo para que incluso el valor 1 sea claramente visible.
+        const calculatedWidth = (W - labelW - 45) * value / max;
+        const bw = Math.max(48, calculatedWidth);
+
         ctx.font = '12px Arial';
         ctx.textAlign = 'left';
         let label = String(item.label || '');
         if (label.length > 30) label = label.slice(0,29) + '…';
+
+        // Etiqueta del síntoma.
         ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(4, y - 1, labelW - 10, 24);
         ctx.fillStyle = '#081A3A';
         ctx.fillText(label, 10, y + 11);
-        ctx.fillStyle = barColor;
-        ctx.fillRect(labelW, y, bw, 22);
 
-        // Valor con fondo blanco y texto oscuro para que sea legible
-        // tanto en modo claro como en modo oscuro.
-        const valueText = String(value);
-        ctx.font = 'bold 12px Arial';
-        const valueWidth = ctx.measureText(valueText).width + 12;
-        const valueX = Math.min(labelW + bw + 8, W - valueWidth - 6);
+        // Barra celeste de alto contraste.
+        ctx.fillStyle = '#00B8F0';
+        ctx.fillRect(labelW, y, Math.min(bw, W - labelW - 8), 24);
 
+        // Cantidad dentro de la barra, en blanco y tamaño mayor.
         ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(valueX, y + 1, valueWidth, 20);
-
-        ctx.fillStyle = '#081A3A';
+        ctx.font = 'bold 15px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(valueText, valueX + valueWidth / 2, y + 11);
+        const visibleBarWidth = Math.min(bw, W - labelW - 8);
+        ctx.fillText(String(value), labelW + visibleBarWidth / 2, y + 13);
         ctx.textAlign = 'left';
       });
       return;
