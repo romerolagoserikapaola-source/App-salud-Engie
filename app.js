@@ -271,9 +271,21 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.fillText(label, 10, y + 11);
         ctx.fillStyle = barColor;
         ctx.fillRect(labelW, y, bw, 22);
-        ctx.fillStyle = textColor;
+
+        // Valor con fondo blanco y texto oscuro para que sea legible
+        // tanto en modo claro como en modo oscuro.
+        const valueText = String(value);
         ctx.font = 'bold 12px Arial';
-        ctx.fillText(String(value), Math.min(labelW + bw + 8, W - 25), y + 11);
+        const valueWidth = ctx.measureText(valueText).width + 12;
+        const valueX = Math.min(labelW + bw + 8, W - valueWidth - 6);
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(valueX, y + 1, valueWidth, 20);
+
+        ctx.fillStyle = '#081A3A';
+        ctx.textAlign = 'center';
+        ctx.fillText(valueText, valueX + valueWidth / 2, y + 11);
+        ctx.textAlign = 'left';
       });
       return;
     }
