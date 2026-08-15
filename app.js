@@ -91,10 +91,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   $('formTrab').addEventListener('submit', async e => {
     e.preventDefault();
+    const submitBtn = e.submitter || $('formTrab').querySelector('button[type="submit"]');
+    if (submitBtn?.disabled) return;
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.dataset.originalText = submitBtn.textContent;
+      submitBtn.textContent = 'Registrando...';
+    }
     try {
-      const bienestar = document.querySelector('input[name="bienestar"]:checked')?.value;
-      const seleccionados = [...document.querySelectorAll('#symptoms input:checked')].map(x => x.value);
-      if (!bienestar) throw new Error('Seleccione su nivel de bienestar.');
+const seleccionados = [...document.querySelectorAll('#symptoms input:checked')].map(x => x.value);
       if (!seleccionados.length) throw new Error('Seleccione una opción en Estado de salud.');
       if (seleccionados.includes('Otro síntoma') && !$('otroSintoma').value.trim()) throw new Error('Especifique el otro síntoma.');
       const consumio = document.querySelector('input[name="medicamento"]:checked')?.value;
@@ -112,8 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await api('guardarReporte', {
         reporte: {
           ...currentWorker,
-          Bienestar: bienestar,
-          Sintomas: seleccionados,
+Sintomas: seleccionados,
           OtroSintoma: $('otroSintoma').value.trim(),
           ConsumioMedicamento: consumio,
           Medicamentos: $('medicamentos').value.trim(),
@@ -124,30 +128,36 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
       setMessage('msgTrab', data.mensaje || 'Registro guardado correctamente.', 'ok');
-
       const tieneSintomas = seleccionados.some(s => s !== 'No tengo ningún síntoma');
-      const reportoAlcohol = alcohol === 'SI';
-      const reportoMarihuana = marihuana === 'SI';
+      const requiereEvaluacion = tieneSintomas || consumio === 'SI' || alcohol === 'SI' || marihuana === 'SI';
 
-      if (tieneSintomas || reportoAlcohol || reportoMarihuana) {
+      if (requiereEvaluacion) {
         alert(
           'Registro generado correctamente.\n\n' +
-          'Se ha identificado una condición que requiere evaluación preventiva. ' +
-          'Informe inmediatamente a su supervisor y al personal de salud antes de iniciar o continuar sus labores.'
+          'Su declaración requiere evaluación preventiva. Informe a su supervisor inmediato y al personal de salud antes de iniciar o continuar trabajos críticos.'
         );
       } else {
         alert(
           'Registro generado correctamente.\n\n' +
-          'No se reportaron síntomas. Si durante la jornada presenta algún malestar o síntoma, ' +
-          'informe inmediatamente a su supervisor y al personal de salud.'
+          'No se reportaron condiciones que requieran evaluación médica. Su condición queda registrada como APTO. ' +
+          'Si durante la jornada presenta algún síntoma o malestar, informe inmediatamente a su supervisor y al personal de salud.'
         );
       }
 
       $('formTrab').reset();
       $('otroWrap').classList.add('hidden');
       $('medWrap').classList.add('hidden');
+      $('formTrab').classList.add('hidden');
+      $('datosTrab').classList.add('hidden');
+      $('dniTrab').value = '';
+      currentWorker = null;
+      if (submitBtn) submitBtn.textContent = submitBtn.dataset.originalText || 'Enviar registro';
     } catch (err) {
       setMessage('msgTrab', err.message, 'error');
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = submitBtn.dataset.originalText || 'Enviar registro';
+      }
     }
   });
 
@@ -168,10 +178,11 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.tab').forEach(x => x.classList.add('hidden'));
       $('tab-' + btn.dataset.tab).classList.remove('hidden');
       if (btn.dataset.tab === 'seguimiento') loadSeguimiento();
+      if (btn.dataset.tab === 'dashboardmedico') loadMedicalDashboard();
     });
   });
 
-  ['f','s'].forEach(p => {
+  ['f','m','s'].forEach(p => {
     $(p+'FechaTipo').addEventListener('change', () => {
       const value = $(p+'FechaTipo').value;
       $(p+'Fecha').classList.toggle('hidden', value !== 'dia');
@@ -188,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function fillCompanies(companies=[]) {
-    ['fEmpresa','sEmpresa'].forEach(id => {
+    ['fEmpresa','mEmpresa','sEmpresa'].forEach(id => {
       const el = $(id);
       const old = el.value;
       el.innerHTML = '<option value="">Todas las empresas</option>' + companies.map(x => `<option>${escapeHtml(x)}</option>`).join('');
@@ -348,7 +359,7 @@ document.addEventListener('DOMContentLoaded', () => {
       el.innerHTML = '<tr><td>Sin registros</td></tr>';
       return;
     }
-    const cols = ['Fecha','DNI','Nombres','Empresa','Bienestar','Condicion','Sintomas','ConsumioMedicamento','CondicionFinal'];
+    const cols = ['Fecha','DNI','Nombres','Empresa','Condicion','Sintomas','ConsumioMedicamento','ConsumoAlcohol12h','ConsumoMarihuana24h','CondicionFinal'];
     el.innerHTML = '<thead><tr>' + cols.map(c => `<th>${c}</th>`).join('') + '</tr></thead><tbody>' +
       rows.map(r => '<tr>' + cols.map(c => `<td>${escapeHtml(r[c] ?? '')}</td>`).join('') + '</tr>').join('') + '</tbody>';
   }
@@ -403,9 +414,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+
+  $('condicionFinal').addEventListener('change', () => {
+    const noApto = $('condicionFinal').value === 'NO APTO';
+    $('obsMedicaWrap').classList.toggle('hidden', !noApto);
+    $('obsMedica').required = noApto;
+    if (!noApto) $('obsMedica').value = '';
+  });
+
   $('formEval').addEventListener('submit', async e => {
     e.preventDefault();
+    const submitBtn = e.submitter || $('formEval').querySelector('button[type="submit"]');
+    if (submitBtn?.disabled) return;
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.dataset.originalText = submitBtn.textContent;
+      submitBtn.textContent = 'Finalizando...';
+    }
     try {
+      if ($('condicionFinal').value === 'NO APTO' && !$('obsMedica').value.trim()) {
+        throw new Error('Debe registrar la observación médica que sustenta la condición NO APTO.');
+      }
       const medicion = {
         DNI: evalWorker.DNI,
         Nombres: evalWorker.Nombres,
@@ -419,19 +448,123 @@ document.addEventListener('DOMContentLoaded', () => {
         Temperatura: $('temp').value,
         Saturacion: $('spo2').value,
         RangoNormal: $('rangoNormal').value,
-        EstadoEvaluacion: $('estadoEvaluacion').value,
-        CondicionFinal: $('condicionFinal').value,
+CondicionFinal: $('condicionFinal').value,
         ObservacionMedica: $('obsMedica').value,
         ReportId: evalWorker.ReportId,
         Sintomas: evalWorker.Sintomas,
         Bienestar: evalWorker.Bienestar,
         ConsumioMedicamento: evalWorker.ConsumioMedicamento,
-        Medicamentos: evalWorker.Medicamentos
+        Medicamentos: evalWorker.Medicamentos,
+        ConsumoAlcohol12h: evalWorker.ConsumoAlcohol12h,
+        ConsumoMarihuana24h: evalWorker.ConsumoMarihuana24h
       };
       const data = await api('guardarMedicion', {medicion});
       setMessage('evalMsg', data.mensaje || 'Evaluación guardada correctamente.', 'ok');
+      alert('Evaluación médica finalizada correctamente.');
+      $('formEval').classList.add('hidden');
+      $('evalWorker').classList.add('hidden');
+      $('evalDni').value = '';
+      evalWorker = null;
+      if (submitBtn) submitBtn.textContent = submitBtn.dataset.originalText || 'Finalizar evaluación médica';
     } catch (err) {
       setMessage('evalMsg', err.message, 'error');
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = submitBtn.dataset.originalText || 'Finalizar evaluación médica';
+      }
+    }
+  });
+
+
+  function renderTrackingTable(rows) {
+    const el = $('tblSeg');
+    const cols = [
+      ['Fecha','Fecha'],['Hora','Hora'],['DNI','DNI'],['Nombres','Nombres'],['Empresa','Empresa'],
+      ['Sintomas','Síntomas'],['ConsumioMedicamento','Medicamentos'],['ConsumoAlcohol12h','Alcohol 12 h'],
+      ['ConsumoMarihuana24h','Marihuana 24 h'],['CondicionFinal','Condición Final']
+    ];
+    if (!rows.length) {
+      el.innerHTML = '<tr><td>Sin registros</td></tr>';
+      return;
+    }
+    el.innerHTML = '<thead><tr>' + cols.map(c => `<th>${c[1]}</th>`).join('') + '</tr></thead><tbody>' +
+      rows.map(r => '<tr>' + cols.map(c => `<td>${escapeHtml(r[c[0]] ?? '')}</td>`).join('') + '</tr>').join('') + '</tbody>';
+  }
+
+  function renderMedicalTable(rows) {
+    const el = $('tblMed');
+    const cols = [
+      ['Fecha','Fecha'],['Hora','Hora'],['DNI','DNI'],['Nombres','Nombres'],['Empresa','Empresa'],
+      ['PresionArterial','PA (mmHG)'],['FrecuenciaCardiaca','F.C. (x min.)'],
+      ['FrecuenciaRespiratoria','F.R. (x min.)'],['Temperatura','T° (C°)'],
+      ['Saturacion','Sat. O2 (%)'],['RangoNormal','Rango normal'],
+      ['CondicionFinal','Condición Final'],['ObservacionMedica','Observación médica']
+    ];
+    if (!rows.length) {
+      el.innerHTML = '<tr><td>Sin evaluaciones médicas</td></tr>';
+      return;
+    }
+    el.innerHTML = '<thead><tr>' + cols.map(c => `<th>${c[1]}</th>`).join('') + '</tr></thead><tbody>' +
+      rows.map(r => '<tr>' + cols.map(c => `<td>${escapeHtml(r[c[0]] ?? '')}</td>`).join('') + '</tr>').join('') + '</tbody>';
+  }
+
+  function renderMedicalKpis(k) {
+    const items = [
+      ['Evaluaciones médicas', k.total || 0],
+      ['Aptos', k.aptos || 0],
+      ['No aptos', k.noAptos || 0]
+    ];
+    $('kpisMed').innerHTML = items.map(x => `<div class="kpi"><span>${x[0]}</span><b>${x[1]}</b></div>`).join('');
+  }
+
+  async function loadMedicalDashboard() {
+    try {
+      const data = await api('dashboardMedico', {
+        empresa: $('mEmpresa').value,
+        condicion: $('mCondicion').value,
+        dni: $('mDni').value.trim(),
+        ...filterDates('m')
+      });
+      fillCompanies(data.empresas || []);
+      renderMedicalKpis(data.kpis || {});
+      renderMedicalTable(data.registros || []);
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  $('btnFiltrarMed').addEventListener('click', loadMedicalDashboard);
+
+  $('btnPdfMed').addEventListener('click', async () => {
+    const btn = $('btnPdfMed');
+    if (btn.disabled) return;
+    btn.disabled = true;
+    const oldText = btn.textContent;
+    btn.textContent = 'Generando PDF...';
+    try {
+      const data = await api('pdfEvaluaciones', {
+        empresa: $('mEmpresa').value,
+        condicion: $('mCondicion').value,
+        dni: $('mDni').value.trim(),
+        ...filterDates('m')
+      });
+      const binary = atob(data.base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i=0;i<binary.length;i++) bytes[i] = binary.charCodeAt(i);
+      const blob = new Blob([bytes], {type:'application/pdf'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = data.filename || 'Resumen_Evaluaciones_Medicas.pdf';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = oldText;
     }
   });
 
@@ -439,13 +572,12 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const data = await api('seguimiento', {
         empresa: $('sEmpresa').value,
-        estadoEvaluacion: $('sEvaluacion').value,
         condicion: $('sCondicion').value,
         dni: $('sDni').value.trim(),
         ...filterDates('s')
       });
       fillCompanies(data.empresas);
-      renderTable('tblSeg', data.registros || []);
+      renderTrackingTable(data.registros || []);
     } catch (err) {
       alert(err.message);
     }

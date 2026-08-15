@@ -62,7 +62,7 @@
     <section class="card info-card">
       <h2>¿Qué ocurrirá después?</h2>
       <div class="info-row"><span>1</span><p>Se validan tus datos desde el padrón de trabajadores.</p></div>
-      <div class="info-row"><span>2</span><p>Se registra tu bienestar, síntomas, medicación y trabajo en altura.</p></div>
+      <div class="info-row"><span>2</span><p>Se registran tus síntomas, medicación, trabajo en altura y declaración de consumo de sustancias.</p></div>
       <div class="info-row"><span>3</span><p>Si reportas síntomas, el equipo médico recibe una alerta inmediata.</p></div>
       <div class="info-row"><span>4</span><p>Recibirás en tu correo el PDF del registro preventivo.</p></div>
       <div class="important"><b>Importante</b><br>Reportar “sin síntomas” no reemplaza la comunicación inmediata si aparece algún malestar durante la jornada.</div>
@@ -70,26 +70,9 @@
   </div>
 
   <form id="formTrab" class="hidden">
-    <section class="card">
+<section class="card">
       <div class="step-title">
         <span>2</span>
-        <div>
-          <strong>¿Cómo se siente el día de hoy antes de iniciar sus labores?</strong>
-          <small>Seleccione su nivel de bienestar general.</small>
-        </div>
-      </div>
-      <div class="wellbeing">
-        <label><input type="radio" name="bienestar" value="5" required><div class="emoji e5">🙂</div><b>5</b><small>Muy bien</small></label>
-        <label><input type="radio" name="bienestar" value="4"><div class="emoji e4">🙂</div><b>4</b><small>Bien</small></label>
-        <label><input type="radio" name="bienestar" value="3"><div class="emoji e3">😐</div><b>3</b><small>Regular</small></label>
-        <label><input type="radio" name="bienestar" value="2"><div class="emoji e2">☹️</div><b>2</b><small>Mal</small></label>
-        <label><input type="radio" name="bienestar" value="1"><div class="emoji e1">☹️</div><b>1</b><small>Muy mal</small></label>
-      </div>
-    </section>
-
-    <section class="card">
-      <div class="step-title">
-        <span>3</span>
         <div><strong>Estado de salud</strong><small>Marca todas las opciones que correspondan.</small></div>
       </div>
       <div id="symptoms" class="checks">
@@ -111,7 +94,7 @@
 
     <section class="card">
       <div class="step-title">
-        <span>4</span>
+        <span>3</span>
         <div><strong>Consumo de medicamentos</strong><small>Considere las últimas 24 horas.</small></div>
       </div>
       <label>¿Consumió algún medicamento en las últimas 24 horas?</label>
@@ -127,7 +110,7 @@
 
     <section class="card">
       <div class="step-title">
-        <span>5</span>
+        <span>4</span>
         <div><strong>Trabajo en altura</strong><small>Indique si realizará labores a más de 7 metros.</small></div>
       </div>
       <div class="radios">
@@ -136,7 +119,7 @@
       </div>
       <div class="subsection">
         <div class="step-title compact">
-          <span>6</span>
+          <span>5</span>
           <div>
             <strong>Consumo de alcohol y marihuana</strong>
             <small>Responda considerando los periodos indicados.</small>
@@ -180,6 +163,7 @@
     <div class="tabs">
       <button type="button" data-tab="dashboard" class="active">Dashboard</button>
       <button type="button" data-tab="evaluacion">Evaluación médica</button>
+      <button type="button" data-tab="dashboardmedico">Dashboard médico</button>
       <button type="button" data-tab="seguimiento">Seguimiento</button>
     </div>
 
@@ -223,20 +207,39 @@
           <label>Temperatura °C<input id="temp" type="number" step="0.1" required></label>
           <label>Saturación O₂ %<input id="spo2" type="number" required></label>
           <label>Valores dentro del rango normal<select id="rangoNormal"><option>SI</option><option>NO</option></select></label>
-          <label>Estado de evaluación<select id="estadoEvaluacion"><option>EVALUADO</option><option>PENDIENTE</option><option>DERIVADO</option></select></label>
-          <label>Condición final<select id="condicionFinal"><option>APTO</option><option>OBSERVADO</option><option>NO APTO</option></select></label>
-          <label class="full">Observación médica<textarea id="obsMedica" rows="3"></textarea></label>
+<label>Condición final<select id="condicionFinal"><option>APTO</option><option>NO APTO</option></select></label>
+          <label id="obsMedicaWrap" class="full hidden">Observación médica<textarea id="obsMedica" rows="3" placeholder="Indique el motivo de la condición NO APTO"></textarea></label>
           <button class="primary full" type="submit">Finalizar evaluación médica</button>
         </form>
         <div id="evalMsg" class="message"></div>
       </section>
     </section>
 
+
+    <section id="tab-dashboardmedico" class="tab hidden">
+      <div class="filters card">
+        <select id="mEmpresa"><option value="">Todas las empresas</option></select>
+        <select id="mCondicion"><option value="">Todas las condiciones</option><option>APTO</option><option>NO APTO</option></select>
+        <select id="mFechaTipo"><option value="todos">Todas las fechas</option><option value="dia">Seleccionar día</option><option value="mes">Seleccionar mes</option></select>
+        <input id="mFecha" type="date" class="hidden">
+        <input id="mMes" type="month" class="hidden">
+        <input id="mDni" inputmode="numeric" maxlength="8" placeholder="Filtrar por DNI">
+        <button id="btnFiltrarMed" type="button">Aplicar filtros</button>
+        <button id="btnPdfMed" type="button" class="primary">Generar PDF</button>
+      </div>
+      <div id="kpisMed" class="kpis kpis-med"></div>
+      <section class="card">
+        <h2>Resumen de evaluaciones médicas</h2>
+        <div class="table-wrap">
+          <table id="tblMed"></table>
+        </div>
+      </section>
+    </section>
+
     <section id="tab-seguimiento" class="tab hidden">
       <div class="filters card">
         <select id="sEmpresa"><option value="">Todas las empresas</option></select>
-        <select id="sEvaluacion"><option value="">Todos los estados de evaluación</option><option>EVALUADO</option><option>PENDIENTE</option><option>DERIVADO</option></select>
-        <select id="sCondicion"><option value="">Todas las condiciones</option><option>APTO</option><option>OBSERVADO</option><option>NO APTO</option></select>
+<select id="sCondicion"><option value="">Todas las condiciones</option><option>APTO</option><option>NO APTO</option></select>
         <select id="sFechaTipo"><option value="todos">Todas las fechas</option><option value="dia">Seleccionar día</option><option value="mes">Seleccionar mes</option></select>
         <input id="sFecha" type="date" class="hidden">
         <input id="sMes" type="month" class="hidden">
@@ -267,6 +270,6 @@
 </main>
 
 <script src="config.js"></script>
-<script src="app.js?v=242"></script>
+<script src="app.js?v=250"></script>
 </body>
 </html>

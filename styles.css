@@ -87,3 +87,30 @@ canvas{width:100%;height:300px}.result{margin-top:18px;padding:20px;border-radiu
 @media(max-width:600px){
   .subsection{padding:14px}
 }
+
+
+/* V2.5 - revisión operativa */
+.btn-disabled, button:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+  filter:grayscale(.15);
+}
+.kpis-med{grid-template-columns:repeat(3,1fr)}
+#tblMed{font-size:12px}
+#tblMed th{white-space:normal;min-width:92px;vertical-align:bottom}
+#tblMed td{vertical-align:top}
+.med-note{
+  padding:10px 12px;
+  border-radius:10px;
+  background:#eef8ff;
+  border-left:4px solid var(--cyan);
+  margin-top:12px;
+  color:var(--text);
+}
+@media(max-width:900px){
+  .kpis-med{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:600px){
+  .kpis-med{grid-template-columns:1fr 1fr}
+  #tblMed{font-size:11px}
+}
