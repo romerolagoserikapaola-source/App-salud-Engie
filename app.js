@@ -154,6 +154,9 @@ Sintomas: seleccionados,
       if (submitBtn) submitBtn.textContent = submitBtn.dataset.originalText || 'Enviar registro';
     } catch (err) {
       setMessage('msgTrab', err.message, 'error');
+      if (String(err.message || '').includes('Ya existe un registro de salud para este DNI')) {
+        alert(err.message);
+      }
       if (submitBtn) {
         submitBtn.disabled = false;
         submitBtn.textContent = submitBtn.dataset.originalText || 'Enviar registro';
@@ -359,7 +362,7 @@ Sintomas: seleccionados,
       el.innerHTML = '<tr><td>Sin registros</td></tr>';
       return;
     }
-    const cols = ['Fecha','DNI','Nombres','Empresa','Condicion','Sintomas','ConsumioMedicamento','ConsumoAlcohol12h','ConsumoMarihuana24h','CondicionFinal'];
+    const cols = ['Fecha','DNI','Nombres','Cargo','Empresa','Condicion','Sintomas','ConsumioMedicamento','ConsumoAlcohol12h','ConsumoMarihuana24h','CondicionFinal'];
     el.innerHTML = '<thead><tr>' + cols.map(c => `<th>${c}</th>`).join('') + '</tr></thead><tbody>' +
       rows.map(r => '<tr>' + cols.map(c => `<td>${escapeHtml(r[c] ?? '')}</td>`).join('') + '</tr>').join('') + '</tbody>';
   }
@@ -438,6 +441,7 @@ Sintomas: seleccionados,
       const medicion = {
         DNI: evalWorker.DNI,
         Nombres: evalWorker.Nombres,
+        Cargo: evalWorker.Cargo,
         Empresa: evalWorker.Empresa,
         Correo: evalWorker.Correo,
         Fecha: $('evalFecha').value,
@@ -479,7 +483,7 @@ CondicionFinal: $('condicionFinal').value,
   function renderTrackingTable(rows) {
     const el = $('tblSeg');
     const cols = [
-      ['Fecha','Fecha'],['Hora','Hora'],['DNI','DNI'],['Nombres','Nombres'],['Empresa','Empresa'],
+      ['Fecha','Fecha'],['Hora','Hora'],['DNI','DNI'],['Nombres','Nombres'],['Cargo','Cargo'],['Empresa','Empresa'],
       ['Sintomas','Síntomas'],['ConsumioMedicamento','Medicamentos'],['ConsumoAlcohol12h','Alcohol 12 h'],
       ['ConsumoMarihuana24h','Marihuana 24 h'],['CondicionFinal','Condición Final']
     ];
@@ -494,7 +498,7 @@ CondicionFinal: $('condicionFinal').value,
   function renderMedicalTable(rows) {
     const el = $('tblMed');
     const cols = [
-      ['Fecha','Fecha'],['Hora','Hora'],['DNI','DNI'],['Nombres','Nombres'],['Empresa','Empresa'],
+      ['Fecha','Fecha'],['Hora','Hora'],['DNI','DNI'],['Nombres','Nombres'],['Cargo','Cargo'],['Empresa','Empresa'],
       ['PresionArterial','PA (mmHG)'],['FrecuenciaCardiaca','F.C. (x min.)'],
       ['FrecuenciaRespiratoria','F.R. (x min.)'],['Temperatura','T° (C°)'],
       ['Saturacion','Sat. O2 (%)'],['RangoNormal','Rango normal'],
