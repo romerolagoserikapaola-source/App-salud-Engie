@@ -592,18 +592,53 @@ $('btnConsulta').addEventListener('click', async () => {
     try {
       const dni = $('consultaDni').value.trim();
       if (!/^\d{8}$/.test(dni)) throw new Error('Ingrese un DNI válido de 8 dígitos.');
+
       const data = await api('consulta', {dni});
       const r = data.resultado || {};
       const c = r.CondicionFinal || 'PENDIENTE';
       const cls = c === 'APTO' ? 'apto' : c === 'NO APTO' ? 'no-apto' : 'observado';
-      const motivo = r.ObservacionMedica || (
-        c === 'NO APTO'
-          ? 'La condición fue determinada por el personal de salud según la evaluación realizada.'
-          : c === 'OBSERVADO'
-            ? 'El trabajador requiere seguimiento o una evaluación complementaria.'
-            : 'No se registraron restricciones en la última evaluación.'
-      );
+
+      const sintomasTexto = String(r.Sintomas || '').trim();
+      const sinSintomas = ['no tengo ningún síntoma','no tengo ningun sintoma'];
+      const tieneSintomas = sintomasTexto &&
+        !sinSintomas.includes(sintomasTexto.toLowerCase());
+
+      let motivo = '';
+      let alerta = '';
+
+      if (c === 'PENDIENTE') {
+        if (tieneSintomas) {
+          motivo = 'El trabajador reportó síntomas y se encuentra pendiente de evaluación médica.';
+          alerta = `
+            <div class="consulta-alerta-pendiente">
+              <b>⚠ TRABAJADOR CON SÍNTOMAS REPORTADOS</b>
+              <span>Requiere evaluación por el personal de salud.</span>
+              <small><b>Síntomas reportados:</b> ${escapeHtml(sintomasTexto)}</small>
+            </div>`;
+        } else {
+          const razones = [];
+          if (String(r.ConsumioMedicamento || '').toUpperCase() === 'SI') razones.push('consumo de medicamentos');
+          if (String(r.ConsumoAlcohol12h || '').toUpperCase() === 'SI') razones.push('consumo de alcohol en las últimas 12 horas');
+          if (String(r.ConsumoMarihuana24h || '').toUpperCase() === 'SI') razones.push('consumo de marihuana en las últimas 24 horas');
+
+          motivo = razones.length
+            ? 'El trabajador reportó una condición que requiere evaluación médica: ' + razones.join(', ') + '.'
+            : 'El trabajador se encuentra pendiente de evaluación médica.';
+
+          alerta = `
+            <div class="consulta-alerta-pendiente">
+              <b>⚠ EVALUACIÓN MÉDICA PENDIENTE</b>
+              <span>${escapeHtml(motivo)}</span>
+            </div>`;
+        }
+      } else if (c === 'NO APTO') {
+        motivo = r.ObservacionMedica || 'La condición NO APTO fue determinada por el personal de salud.';
+      } else {
+        motivo = r.ObservacionMedica || 'No se registraron restricciones en la última evaluación.';
+      }
+
       $('consultaResultado').innerHTML = `
+        ${alerta}
         <div class="consulta-summary">
           <div class="status ${cls}">${escapeHtml(c)}</div>
           <div class="meta">
@@ -613,7 +648,11 @@ $('btnConsulta').addEventListener('click', async () => {
             <div><b>Hora</b><br>${escapeHtml(r.Hora || 'No registrada')}</div>
           </div>
           <div class="reason"><b>Motivo / observación:</b><br>${escapeHtml(motivo)}</div>
-          <div class="note">Resultado de la última evaluación realizada por el personal de salud.</div>
+          <div class="note">${
+            c === 'PENDIENTE'
+              ? 'El trabajador aún no cuenta con una evaluación final realizada por el personal de salud.'
+              : 'Resultado de la última evaluación realizada por el personal de salud.'
+          }</div>
         </div>`;
     } catch (err) {
       $('consultaResultado').innerHTML = `<div class="message error">${escapeHtml(err.message)}</div>`;

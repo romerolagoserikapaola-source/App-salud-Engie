@@ -114,3 +114,27 @@ canvas{width:100%;height:300px}.result{margin-top:18px;padding:20px;border-radiu
   .kpis-med{grid-template-columns:1fr 1fr}
   #tblMed{font-size:11px}
 }
+
+
+/* V2.7.1 - Consulta de salud: estado pendiente con síntomas */
+.consulta-alerta-pendiente{
+  margin:18px 0 14px;
+  padding:16px 18px;
+  border-radius:12px;
+  border-left:5px solid #f59e0b;
+  background:#fff4d8;
+  color:#5b3a00;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.consulta-alerta-pendiente b{font-size:15px}
+.consulta-alerta-pendiente span{font-size:14px}
+.consulta-alerta-pendiente small{font-size:13px}
+@media (prefers-color-scheme: dark){
+  .consulta-alerta-pendiente{
+    background:#3b2d0b;
+    color:#fff3c4;
+    border-left-color:#fbbf24;
+  }
+}
